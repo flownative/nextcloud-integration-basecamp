@@ -1,0 +1,19 @@
+{
+	"name": "flownative/integration_basecamp",
+	"description": "Nextcloud Basecamp integration",
+	"require": {
+		"php": "^8.2"
+	},
+	"autoload": {
+		"psr-4": {
+			"OCA\\IntegrationBasecamp\\": "lib/"
+		}
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"classmap-authoritative": true,
+		"platform": {
+			"php": "8.2"
+		}
+	}
+}

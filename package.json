@@ -1,0 +1,24 @@
+{
+  "name": "integration_basecamp",
+  "version": "0.1.0",
+  "description": "Basecamp integration for Nextcloud",
+  "type": "module",
+  "scripts": {
+    "build": "NODE_ENV=production vite --mode production build",
+    "dev": "NODE_ENV=development vite --mode development build",
+    "watch": "NODE_ENV=development vite --mode development build --watch"
+  },
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "@nextcloud/axios": "^2.5.1",
+    "@nextcloud/initial-state": "^3.0.0",
+    "@nextcloud/l10n": "^3.2.0",
+    "@nextcloud/router": "^3.0.1",
+    "@nextcloud/vue": "^9.2.0",
+    "vue": "^3.5.24",
+    "vue-material-design-icons": "^5.3.1"
+  },
+  "devDependencies": {
+    "@nextcloud/vite-config": "^2.5.2"
+  }
+}

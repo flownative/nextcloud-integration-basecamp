@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<info>
+    <id>integration_basecamp</id>
+    <name>Basecamp integration</name>
+    <summary>Link previews for Basecamp card URLs</summary>
+    <description><![CDATA[Basecamp integration provides link previews for Basecamp card URLs in Talk and Text documents, showing card title, status, column, assignees and due date.]]></description>
+    <version>0.1.0</version>
+    <licence>agpl</licence>
+    <author>Flownative</author>
+    <namespace>IntegrationBasecamp</namespace>
+    <category>integration</category>
+    <dependencies>
+        <nextcloud min-version="28" max-version="34"/>
+    </dependencies>
+    <settings>
+        <admin>OCA\IntegrationBasecamp\Settings\Admin</admin>
+        <admin-section>OCA\IntegrationBasecamp\Settings\AdminSection</admin-section>
+        <personal>OCA\IntegrationBasecamp\Settings\Personal</personal>
+        <personal-section>OCA\IntegrationBasecamp\Settings\AdminSection</personal-section>
+    </settings>
+</info>
