@@ -19,24 +19,57 @@ A Nextcloud app that provides rich link previews for [Basecamp](https://basecamp
 
 ## Installation
 
-1. Clone this repository into your Nextcloud `apps` directory:
-   ```bash
-   cd /path/to/nextcloud/apps
-   git clone https://github.com/flownative/nextcloud-integration-basecamp integration_basecamp
-   ```
+### From Release Archive (recommended)
 
-2. Install dependencies and build:
-   ```bash
-   cd integration_basecamp
-   composer install
-   npm install
-   npm run build
-   ```
+Download the latest release archive from the [Releases](https://github.com/flownative/nextcloud-integration-basecamp/releases) page and extract it into your Nextcloud apps directory:
 
-3. Enable the app:
-   ```bash
-   php occ app:enable integration_basecamp
-   ```
+```bash
+cd /path/to/nextcloud/apps
+wget https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.1.0/integration_basecamp.tar.gz
+tar xzf integration_basecamp.tar.gz
+rm integration_basecamp.tar.gz
+chown -R www-data:www-data integration_basecamp
+sudo -u www-data php /path/to/nextcloud/occ app:enable integration_basecamp
+```
+
+### Nextcloud AIO (All-in-One)
+
+For Nextcloud AIO installations, install directly into the running container:
+
+```bash
+sudo docker exec -it --user root nextcloud-aio-nextcloud bash -c "
+  cd /var/www/html/custom_apps &&
+  curl -fsSL -o integration_basecamp.tar.gz https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.1.0/integration_basecamp.tar.gz &&
+  tar xzf integration_basecamp.tar.gz &&
+  rm integration_basecamp.tar.gz &&
+  chown -R www-data:www-data integration_basecamp
+"
+sudo docker exec --user www-data nextcloud-aio-nextcloud php occ app:enable integration_basecamp
+```
+
+The app is stored in the persistent `custom_apps` volume and survives AIO updates.
+
+### From Source
+
+```bash
+cd /path/to/nextcloud/apps
+git clone https://github.com/flownative/nextcloud-integration-basecamp integration_basecamp
+cd integration_basecamp
+composer install --no-dev
+npm ci
+npm run build
+sudo -u www-data php /path/to/nextcloud/occ app:enable integration_basecamp
+```
+
+### Upgrading
+
+Download and extract the new release over the existing installation, then run:
+
+```bash
+sudo -u www-data php /path/to/nextcloud/occ upgrade
+```
+
+For AIO, repeat the installation steps above — the new files replace the old ones in the persistent volume.
 
 ## Configuration
 
