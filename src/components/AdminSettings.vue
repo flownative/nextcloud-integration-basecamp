@@ -57,6 +57,8 @@
 import { loadState } from '@nextcloud/initial-state'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { confirmPassword } from '@nextcloud/password-confirmation'
+import '../../node_modules/@nextcloud/password-confirmation/dist/style.css'
 
 export default {
 	name: 'AdminSettings',
@@ -98,6 +100,7 @@ export default {
 		},
 		async saveSensitiveConfig() {
 			try {
+				await confirmPassword()
 				await axios.put(generateUrl('/apps/integration_basecamp/sensitive-admin-config'), {
 					values: {
 						client_id: this.state.client_id,
@@ -106,15 +109,6 @@ export default {
 				})
 				this.showSaved()
 			} catch (e) {
-				if (e.response?.status === 403) {
-					// Password confirmation required — Nextcloud will show dialog automatically
-					OC.dialogs.confirm(
-						t('integration_basecamp', 'Please confirm your password to save sensitive settings.'),
-						t('integration_basecamp', 'Password confirmation required'),
-						() => {},
-						true,
-					)
-				}
 				console.error('Failed to save sensitive settings', e)
 			}
 		},
