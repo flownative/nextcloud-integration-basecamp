@@ -149,6 +149,7 @@ The "/" Smart Picker uses `registerCustomPickerElement()` from `@nextcloud/vue/c
 - **Submit:** `el.dispatchEvent(new CustomEvent('submit', { bubbles: true, detail: url }))` — the `detail` value (a URL string) gets inserted into the document
 - **Cancel:** `el.dispatchEvent(new CustomEvent('cancel', { bubbles: true }))`
 - The `NcCustomPickerRenderResult` returned from the registration callback wraps the element and the Vue app instance (for cleanup via `unmount()`)
+- **Picker-only providers must return `false`/`null`** from `matchReference()` and `resolveReference()`. If `matchReference()` returns `true`, Nextcloud classifies the provider as a URL resolver and excludes it from the "/" picker menu.
 
 ## Important Implementation Notes
 
@@ -157,6 +158,13 @@ The "/" Smart Picker uses `registerCustomPickerElement()` from `@nextcloud/vue/c
 - The `#[PasswordConfirmationRequired]` attribute on `setSensitiveAdminConfig` ensures Client ID/Secret changes require password re-entry
 - The reference cache prefix uses `$this->userId` so that disconnecting/reconnecting invalidates a user's cached references
 - The Basecamp API requires a descriptive `User-Agent` header; requests without one will be rejected
+
+## Deployment / Upgrade Gotchas
+
+- **Nextcloud copies app files** to `/var/www/html/integration_basecamp/` (outside `custom_apps/`). This internal copy is used for serving JS/CSS and is NOT updated when you replace files in `custom_apps/`. You must `rm -rf /var/www/html/integration_basecamp/` and then `occ app:disable` + `occ app:enable` to force Nextcloud to re-create it.
+- **`occ upgrade` does not reliably detect app-level version changes.** Always use `app:disable` + `app:enable` instead.
+- **The `?v=` cache-buster hash** in JS URLs is based on the Nextcloud version, not the app version. It does not change when the app is updated.
+- **Version bump must happen before tagging.** The version in `info.xml` must match the git tag — the GitHub Actions workflow builds from the tagged source, and Nextcloud uses `info.xml` to detect the installed version.
 
 ## Reference Projects
 

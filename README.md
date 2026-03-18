@@ -64,6 +64,8 @@ sudo -u www-data php /path/to/nextcloud/occ app:enable integration_basecamp
 
 Remove the old app directory, extract the new release, and re-enable the app. Simply extracting over the old files is not enough — old build artifacts (JS chunks with hashed filenames) would remain and `occ upgrade` does not reliably detect app-level version changes.
 
+**Important:** Nextcloud may copy app files to `/var/www/html/integration_basecamp/` (outside `custom_apps/`). This copy is used for serving JS/CSS and is **not** updated automatically. You must delete it so Nextcloud re-creates it from `custom_apps/` on the next `app:enable`.
+
 **Standard installation:**
 
 ```bash
@@ -77,9 +79,10 @@ sudo -u www-data php /path/to/nextcloud/occ app:disable integration_basecamp
 sudo -u www-data php /path/to/nextcloud/occ app:enable integration_basecamp
 ```
 
-**AIO:** Run the same AIO installation command above (it includes `rm -rf`), then:
+**AIO:** Run the same AIO installation command above (it includes `rm -rf`), then also remove the Nextcloud-internal copy:
 
 ```bash
+sudo docker exec -it --user root nextcloud-aio-nextcloud bash -c "rm -rf /var/www/html/integration_basecamp"
 sudo docker exec --user www-data nextcloud-aio-nextcloud php occ app:disable integration_basecamp
 sudo docker exec --user www-data nextcloud-aio-nextcloud php occ app:enable integration_basecamp
 ```
