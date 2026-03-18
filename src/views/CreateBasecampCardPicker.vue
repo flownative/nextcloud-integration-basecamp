@@ -19,7 +19,7 @@
 				<label for="bc-project">{{ t('integration_basecamp', 'Project') }}</label>
 				<select id="bc-project" v-model="selectedProjectId" :disabled="loadingProjects || creating" @change="onProjectSelected">
 					<option value="">{{ loadingProjects ? t('integration_basecamp', 'Loading…') : t('integration_basecamp', 'Select project') }}</option>
-					<option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
+					<option v-for="p in projects" :key="p.id" :value="String(p.id)">{{ p.name }}</option>
 				</select>
 			</div>
 
@@ -27,7 +27,7 @@
 				<label for="bc-column">{{ t('integration_basecamp', 'Column') }}</label>
 				<select id="bc-column" v-model="selectedColumnId" :disabled="!selectedProjectId || loadingColumns || creating">
 					<option value="">{{ loadingColumns ? t('integration_basecamp', 'Loading…') : t('integration_basecamp', 'Select column') }}</option>
-					<option v-for="col in columns" :key="col.id" :value="col.id">{{ col.title }}</option>
+					<option v-for="col in columns" :key="col.id" :value="String(col.id)">{{ col.title }}</option>
 				</select>
 			</div>
 		</div>

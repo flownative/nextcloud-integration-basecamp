@@ -40,11 +40,11 @@ class BasecampAPIService {
 	}
 
 	/**
-	 * Get projects for a Basecamp account
+	 * Get projects for a Basecamp account (all pages)
 	 */
 	public function getProjects(?string $userId, string $accountId): array {
 		$url = 'https://3.basecampapi.com/' . $accountId . '/projects.json';
-		return $this->request($userId, $url);
+		return $this->requestAllPages($userId, $url);
 	}
 
 	/**
@@ -82,12 +82,12 @@ class BasecampAPIService {
 	}
 
 	/**
-	 * Get people assigned to a project
+	 * Get people assigned to a project (all pages)
 	 */
 	public function getProjectPeople(?string $userId, string $accountId, string $projectId): array {
 		$url = 'https://3.basecampapi.com/' . $accountId
 			. '/projects/' . $projectId . '/people.json';
-		return $this->request($userId, $url);
+		return $this->requestAllPages($userId, $url);
 	}
 
 	/**
@@ -302,6 +302,16 @@ class BasecampAPIService {
 
 			$response = $this->client->put($url, $options);
 			return json_decode((string)$response->getBody(), true) ?: [];
+		} catch (ClientException $e) {
+			if ($e->getResponse()->getStatusCode() === 401 && $userId !== null) {
+				if ($this->refreshToken($userId)) {
+					return $this->putRequest(null, $url, $body);
+				}
+			}
+			$this->logger->warning('Basecamp API PUT client error', [
+				'status' => $e->getResponse()->getStatusCode(),
+			]);
+			return ['error' => $e->getMessage()];
 		} catch (Exception|Throwable $e) {
 			$this->logger->warning('Basecamp API PUT error', ['exception' => $e]);
 			return ['error' => $e->getMessage()];
@@ -357,6 +367,70 @@ class BasecampAPIService {
 			];
 		} catch (Exception|Throwable $e) {
 			$this->logger->warning('Basecamp API request error (POST)', ['exception' => $e]);
+			return ['error' => $e->getMessage()];
+		}
+	}
+
+	/**
+	 * Fetch all pages of a paginated Basecamp API endpoint.
+	 * Basecamp uses a Link header with rel="next" for pagination.
+	 */
+	private function requestAllPages(?string $userId, string $url): array {
+		$allResults = [];
+		$currentUrl = $url;
+
+		while ($currentUrl !== null) {
+			$result = $this->requestWithHeaders($userId, $currentUrl);
+			if (isset($result['error'])) {
+				return $allResults ?: $result;
+			}
+			$allResults = array_merge($allResults, $result['data']);
+			$currentUrl = $result['next_url'];
+		}
+
+		return $allResults;
+	}
+
+	/**
+	 * Like request(), but also returns the next-page URL from the Link header.
+	 * @return array{data: array, next_url: ?string}|array{error: string}
+	 */
+	private function requestWithHeaders(?string $userId, string $url): array {
+		$accessToken = $this->getAccessToken($userId);
+		if ($accessToken === '') {
+			return ['error' => 'No Basecamp API token available. Please connect your Basecamp account.'];
+		}
+
+		try {
+			$options = [
+				'timeout' => 30,
+				'headers' => [
+					'Authorization' => 'Bearer ' . $accessToken,
+					'User-Agent' => 'Nextcloud Basecamp Integration (https://nextcloud.com)',
+					'Content-Type' => 'application/json',
+				],
+			];
+
+			$response = $this->client->get($url, $options);
+			$body = (string)$response->getBody();
+			$data = json_decode($body, true) ?: [];
+
+			// Parse Link header for next page
+			$nextUrl = null;
+			$linkHeader = $response->getHeader('Link');
+			if ($linkHeader !== '' && preg_match('/<([^>]+)>;\s*rel="next"/', $linkHeader, $matches)) {
+				$nextUrl = $matches[1];
+			}
+
+			return ['data' => $data, 'next_url' => $nextUrl];
+		} catch (ClientException $e) {
+			if ($e->getResponse()->getStatusCode() === 401 && $userId !== null) {
+				if ($this->refreshToken($userId)) {
+					return $this->requestWithHeaders(null, $url);
+				}
+			}
+			return ['error' => $e->getMessage()];
+		} catch (Exception|Throwable $e) {
 			return ['error' => $e->getMessage()];
 		}
 	}

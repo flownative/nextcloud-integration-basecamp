@@ -7,7 +7,6 @@ namespace OCA\IntegrationBasecamp\Reference;
 use OCA\IntegrationBasecamp\AppInfo\Application;
 use OCP\Collaboration\Reference\ADiscoverableReferenceProvider;
 use OCP\Collaboration\Reference\IReference;
-use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 
@@ -17,7 +16,6 @@ class BasecampCreateCardReferenceProvider extends ADiscoverableReferenceProvider
 
 	public function __construct(
 		private BasecampCardReferenceProvider $cardProvider,
-		private IConfig $config,
 		private IL10N $l10n,
 		private IURLGenerator $urlGenerator,
 		private ?string $userId,

@@ -62,6 +62,7 @@ import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwit
 import { loadState } from '@nextcloud/initial-state'
 import axios from '@nextcloud/axios'
 import { generateUrl, imagePath } from '@nextcloud/router'
+import { showSuccess } from '@nextcloud/dialogs'
 import { confirmPassword } from '@nextcloud/password-confirmation'
 import '../../node_modules/@nextcloud/password-confirmation/dist/style.css'
 
@@ -105,6 +106,7 @@ export default {
 						link_preview_enabled: this.state.link_preview_enabled ? '1' : '0',
 					},
 				})
+				showSuccess(t('integration_basecamp', 'Settings saved'))
 			} catch (e) {
 				console.error('Failed to save settings', e)
 			}
@@ -118,6 +120,7 @@ export default {
 						client_secret: this.state.client_secret,
 					},
 				})
+				showSuccess(t('integration_basecamp', 'Settings saved'))
 			} catch (e) {
 				console.error('Failed to save sensitive settings', e)
 			}
