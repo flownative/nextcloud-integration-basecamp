@@ -40,6 +40,99 @@ class BasecampAPIService {
 	}
 
 	/**
+	 * Get projects for a Basecamp account
+	 */
+	public function getProjects(?string $userId, string $accountId): array {
+		$url = 'https://3.basecampapi.com/' . $accountId . '/projects.json';
+		return $this->request($userId, $url);
+	}
+
+	/**
+	 * Get card tables (kanban boards) for a project by inspecting the project dock
+	 */
+	public function getCardTables(?string $userId, string $accountId, string $projectId): array {
+		$url = 'https://3.basecampapi.com/' . $accountId . '/projects/' . $projectId . '.json';
+		$project = $this->request($userId, $url);
+		if (isset($project['error'])) {
+			return $project;
+		}
+		$cardTables = [];
+		foreach ($project['dock'] ?? [] as $tool) {
+			if (($tool['name'] ?? '') === 'kanban_board' && ($tool['enabled'] ?? false)) {
+				$cardTables[] = [
+					'id' => $tool['id'] ?? 0,
+					'title' => $tool['title'] ?? 'Card Table',
+				];
+			}
+		}
+		return $cardTables;
+	}
+
+	/**
+	 * Get columns for a card table (embedded in card table response as "lists")
+	 */
+	public function getColumns(?string $userId, string $accountId, string $projectId, string $cardTableId): array {
+		$url = 'https://3.basecampapi.com/' . $accountId
+			. '/buckets/' . $projectId . '/card_tables/' . $cardTableId . '.json';
+		$cardTable = $this->request($userId, $url);
+		if (isset($cardTable['error'])) {
+			return $cardTable;
+		}
+		return $cardTable['lists'] ?? [];
+	}
+
+	/**
+	 * Get people assigned to a project
+	 */
+	public function getProjectPeople(?string $userId, string $accountId, string $projectId): array {
+		$url = 'https://3.basecampapi.com/' . $accountId
+			. '/projects/' . $projectId . '/people.json';
+		return $this->request($userId, $url);
+	}
+
+	/**
+	 * Create a new card in a column.
+	 * Assignees are set via a separate PUT request after creation (Basecamp API limitation).
+	 */
+	public function createCard(
+		?string $userId,
+		string $accountId,
+		string $projectId,
+		string $columnId,
+		string $title,
+		?string $content = null,
+		?string $dueOn = null,
+		?array $assigneeIds = null,
+	): array {
+		$url = 'https://3.basecampapi.com/' . $accountId
+			. '/buckets/' . $projectId
+			. '/card_tables/lists/' . $columnId . '/cards.json';
+
+		$body = ['title' => $title];
+		if ($content !== null && $content !== '') {
+			$body['content'] = $content;
+		}
+		if ($dueOn !== null && $dueOn !== '') {
+			$body['due_on'] = $dueOn;
+		}
+
+		$card = $this->postRequest($userId, $url, $body);
+		if (isset($card['error'])) {
+			return $card;
+		}
+
+		// Assign people via PUT (not supported in POST)
+		if ($assigneeIds !== null && count($assigneeIds) > 0 && isset($card['id'])) {
+			$updateUrl = 'https://3.basecampapi.com/' . $accountId
+				. '/buckets/' . $projectId
+				. '/card_tables/cards/' . $card['id'] . '.json';
+			$this->putRequest($userId, $updateUrl, ['assignee_ids' => $assigneeIds]);
+		}
+
+		return $card;
+	}
+
+	/**
 	 * Get authorization info (user identity + accounts)
 	 */
 	public function getAuthorizationInfo(string $accessToken): array {
@@ -51,7 +144,7 @@ class BasecampAPIService {
 					'User-Agent' => 'Nextcloud Basecamp Integration (https://nextcloud.com)',
 				],
 			]);
-			return json_decode($response->getBody(), true) ?: [];
+			return json_decode((string)$response->getBody(), true) ?: [];
 		} catch (Exception|Throwable $e) {
 			$this->logger->warning('Failed to get Basecamp authorization info', ['exception' => $e]);
 			return ['error' => $e->getMessage()];
@@ -76,7 +169,7 @@ class BasecampAPIService {
 					'User-Agent' => 'Nextcloud Basecamp Integration (https://nextcloud.com)',
 				],
 			]);
-			return json_decode($response->getBody(), true) ?: [];
+			return json_decode((string)$response->getBody(), true) ?: [];
 		} catch (Exception|Throwable $e) {
 			$this->logger->warning('Failed to request OAuth token', ['exception' => $e]);
 			return ['error' => $e->getMessage()];
@@ -108,7 +201,7 @@ class BasecampAPIService {
 					'User-Agent' => 'Nextcloud Basecamp Integration (https://nextcloud.com)',
 				],
 			]);
-			$result = json_decode($response->getBody(), true) ?: [];
+			$result = json_decode((string)$response->getBody(), true) ?: [];
 
 			if (isset($result['access_token'])) {
 				$this->setEncryptedUserValue($userId, 'token', $result['access_token']);
@@ -190,6 +283,84 @@ class BasecampAPIService {
 		}
 	}
 
+	private function putRequest(?string $userId, string $url, array $body): array {
+		$accessToken = $this->getAccessToken($userId);
+		if ($accessToken === '') {
+			return ['error' => 'No Basecamp API token available.'];
+		}
+
+		try {
+			$options = [
+				'timeout' => 30,
+				'headers' => [
+					'Authorization' => 'Bearer ' . $accessToken,
+					'User-Agent' => 'Nextcloud Basecamp Integration (https://nextcloud.com)',
+					'Content-Type' => 'application/json',
+				],
+				'body' => json_encode($body),
+			];
+
+			$response = $this->client->put($url, $options);
+			return json_decode((string)$response->getBody(), true) ?: [];
+		} catch (Exception|Throwable $e) {
+			$this->logger->warning('Basecamp API PUT error', ['exception' => $e]);
+			return ['error' => $e->getMessage()];
+		}
+	}
+
+	private function postRequest(?string $userId, string $url, array $body): array {
+		$accessToken = $this->getAccessToken($userId);
+		if ($accessToken === '') {
+			return ['error' => 'No Basecamp API token available. Please connect your Basecamp account.'];
+		}
+
+		try {
+			$options = [
+				'timeout' => 30,
+				'headers' => [
+					'Authorization' => 'Bearer ' . $accessToken,
+					'User-Agent' => 'Nextcloud Basecamp Integration (https://nextcloud.com)',
+					'Content-Type' => 'application/json',
+				],
+				'body' => json_encode($body),
+			];
+
+			$response = $this->client->post($url, $options);
+			$respCode = $response->getStatusCode();
+
+			if ($respCode >= 400) {
+				return ['error' => 'API request failed with status ' . $respCode];
+			}
+
+			return json_decode((string)$response->getBody(), true) ?: [];
+		} catch (ClientException $e) {
+			if ($e->getResponse()->getStatusCode() === 401 && $userId !== null) {
+				if ($this->refreshToken($userId)) {
+					return $this->postRequest(null, $url, $body);
+				}
+			}
+			$responseBody = (string)$e->getResponse()->getBody();
+			$this->logger->warning('Basecamp API client error (POST)', [
+				'status' => $e->getResponse()->getStatusCode(),
+				'response_body' => $responseBody,
+			]);
+			return [
+				'error' => $e->getMessage(),
+				'body' => json_decode($responseBody, true),
+			];
+		} catch (ServerException $e) {
+			$responseBody = (string)$e->getResponse()->getBody();
+			$this->logger->warning('Basecamp API server error (POST)', ['response_body' => $responseBody]);
+			return [
+				'error' => $e->getMessage(),
+				'body' => json_decode($responseBody, true),
+			];
+		} catch (Exception|Throwable $e) {
+			$this->logger->warning('Basecamp API request error (POST)', ['exception' => $e]);
+			return ['error' => $e->getMessage()];
+		}
+	}
+
 	private function request(?string $userId, string $url): array {
 		$accessToken = $this->getAccessToken($userId);
 		if ($accessToken === '') {
@@ -207,7 +378,7 @@ class BasecampAPIService {
 			];
 
 			$response = $this->client->get($url, $options);
-			$body = $response->getBody();
+			$body = (string)$response->getBody();
 			$respCode = $response->getStatusCode();
 
 			if ($respCode >= 400) {
@@ -222,7 +393,7 @@ class BasecampAPIService {
 					return $this->request(null, $url); // retry without userId to avoid infinite loop
 				}
 			}
-			$responseBody = $e->getResponse()->getBody();
+			$responseBody = (string)$e->getResponse()->getBody();
 			$this->logger->warning('Basecamp API client error', [
 				'status' => $e->getResponse()->getStatusCode(),
 				'response_body' => $responseBody,
@@ -232,7 +403,7 @@ class BasecampAPIService {
 				'body' => json_decode($responseBody, true),
 			];
 		} catch (ServerException $e) {
-			$responseBody = $e->getResponse()->getBody();
+			$responseBody = (string)$e->getResponse()->getBody();
 			$this->logger->warning('Basecamp API server error', ['response_body' => $responseBody]);
 			return [
 				'error' => $e->getMessage(),

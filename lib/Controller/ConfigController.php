@@ -129,7 +129,7 @@ class ConfigController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function disconnect(): DataResponse {
-		$keysToDelete = ['token', 'refresh_token', 'token_expires_at', 'oauth_state', 'user_name', 'user_id'];
+		$keysToDelete = ['token', 'refresh_token', 'token_expires_at', 'oauth_state', 'user_name', 'user_id', 'accounts'];
 		foreach ($keysToDelete as $key) {
 			$this->config->deleteUserValue($this->userId, Application::APP_ID, $key);
 		}
@@ -144,6 +144,19 @@ class ConfigController extends Controller {
 				(string)($identity['id'] ?? ''));
 			$name = trim(($identity['first_name'] ?? '') . ' ' . ($identity['last_name'] ?? ''));
 			$this->config->setUserValue($this->userId, Application::APP_ID, 'user_name', $name);
+		}
+		// Store Basecamp 3 account IDs for API access
+		if (isset($info['accounts']) && is_array($info['accounts'])) {
+			$bc3Accounts = array_values(array_filter($info['accounts'], static function (array $account) {
+				return ($account['product'] ?? '') === 'bc3';
+			}));
+			$accountData = array_map(static function (array $account) {
+				return [
+					'id' => (string)($account['id'] ?? ''),
+					'name' => $account['name'] ?? '',
+				];
+			}, $bc3Accounts);
+			$this->config->setUserValue($this->userId, Application::APP_ID, 'accounts', json_encode($accountData));
 		}
 	}
 }

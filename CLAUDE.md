@@ -87,17 +87,20 @@ Fragments like `#__recording_XXXXX` are ignored (still matches).
 ## Key Files
 
 - `appinfo/info.xml` — App manifest (namespace: `IntegrationBasecamp`)
-- `appinfo/routes.php` — API routes (config, OAuth redirect, disconnect)
-- `lib/AppInfo/Application.php` — Bootstrap, registers reference provider + event listener
+- `appinfo/routes.php` — API routes (config, OAuth redirect, disconnect, Smart Picker API)
+- `lib/AppInfo/Application.php` — Bootstrap, registers reference providers + event listener
 - `lib/Reference/BasecampCardReferenceProvider.php` — URL matching + API resolution → rich object
+- `lib/Reference/BasecampCreateCardReferenceProvider.php` — Smart Picker provider for card creation
 - `lib/Service/BasecampAPIService.php` — Basecamp API client, OAuth token management, auto-refresh
 - `lib/Settings/Admin.php` — Admin settings (Client ID/Secret, link preview toggle)
 - `lib/Settings/Personal.php` — Personal settings (Connect/Disconnect Basecamp)
 - `lib/Settings/AdminSection.php` — Settings section registration
 - `lib/Controller/ConfigController.php` — Config endpoints + OAuth callback handler
+- `lib/Controller/BasecampAPIController.php` — API endpoints for Smart Picker (projects, columns, card creation)
 - `lib/Listener/BasecampReferenceListener.php` — Injects reference JS on RenderReferenceEvent
-- `src/reference.js` — Registers Vue widget for rich object type `integration_basecamp_card`
+- `src/reference.js` — Registers Vue widget + Smart Picker custom element
 - `src/views/BasecampCardReferenceWidget.vue` — Compact card preview widget
+- `src/views/CreateBasecampCardPicker.vue` — Smart Picker card creation dialog
 - `src/components/AdminSettings.vue` — Admin settings form (Client ID/Secret)
 - `src/components/PersonalSettings.vue` — Personal settings (Connect/Disconnect)
 
@@ -121,6 +124,15 @@ After changing Vue/JS files, run `npm run build`. PHP changes are reflected imme
 - User-Agent header is required by Basecamp API policy
 - OAuth tokens expire after 14 days; refresh tokens last ~10 years
 - User info endpoint: `https://launchpad.37signals.com/authorization.json`
+- API docs: https://github.com/basecamp/bc3-api
+
+### Basecamp API Gotchas
+
+- **`getBody()` returns a Stream, not a string.** Nextcloud's `IClient` (Guzzle wrapper) returns `GuzzleHttp\Psr7\Stream` from `getBody()`. Always cast with `(string)$response->getBody()` before passing to `json_decode()`.
+- **No `?status=active` filter on projects.** The projects endpoint (`/projects.json`) does NOT accept a `status` query parameter — it will return `400 Bad Request`.
+- **Card tables are in the project dock.** There is no `/card_tables.json` listing endpoint. To find card tables, GET the project (`/projects/{id}.json`) and look for `dock` entries with `"name": "kanban_board"`.
+- **Columns are embedded in the card table.** GET `/buckets/{projectId}/card_tables/{id}.json` returns a `lists` array containing the columns.
+- **Card creation does not support assignees.** POST to `/card_tables/lists/{columnId}/cards.json` only accepts `title`, `content`, `due_on`, `notify`. To set assignees, follow up with a PUT to `/card_tables/cards/{cardId}.json` with `assignee_ids`.
 
 ### OAuth Endpoints
 
@@ -129,6 +141,14 @@ Authorization:  https://launchpad.37signals.com/authorization/new?type=web_serve
 Token exchange: POST https://launchpad.37signals.com/authorization/token?type=web_server&client_id=...&client_secret=...&code=...&redirect_uri=...
 Token refresh:  POST https://launchpad.37signals.com/authorization/token?type=refresh&refresh_token=...&client_id=...&client_secret=...
 ```
+
+## Smart Picker (Custom Picker Elements)
+
+The "/" Smart Picker uses `registerCustomPickerElement()` from `@nextcloud/vue/components/NcRichText`. Communication between the Vue picker component and the Nextcloud framework happens via DOM CustomEvents:
+
+- **Submit:** `el.dispatchEvent(new CustomEvent('submit', { bubbles: true, detail: url }))` — the `detail` value (a URL string) gets inserted into the document
+- **Cancel:** `el.dispatchEvent(new CustomEvent('cancel', { bubbles: true }))`
+- The `NcCustomPickerRenderResult` returned from the registration callback wraps the element and the Vue app instance (for cleanup via `unmount()`)
 
 ## Important Implementation Notes
 

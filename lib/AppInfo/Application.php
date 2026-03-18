@@ -6,6 +6,7 @@ namespace OCA\IntegrationBasecamp\AppInfo;
 
 use OCA\IntegrationBasecamp\Listener\BasecampReferenceListener;
 use OCA\IntegrationBasecamp\Reference\BasecampCardReferenceProvider;
+use OCA\IntegrationBasecamp\Reference\BasecampCreateCardReferenceProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -22,6 +23,7 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		$context->registerReferenceProvider(BasecampCardReferenceProvider::class);
+		$context->registerReferenceProvider(BasecampCreateCardReferenceProvider::class);
 		$context->registerEventListener(RenderReferenceEvent::class, BasecampReferenceListener::class);
 	}
 

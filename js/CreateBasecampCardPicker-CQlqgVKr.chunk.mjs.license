@@ -1,0 +1,7 @@
+SPDX-License-Identifier: AGPL-3.0
+SPDX-FileCopyrightText: integration_basecamp developers
+
+This file is generated from multiple sources. Included packages:
+- integration_basecamp
+	- version: 0.1.0
+	- license: AGPL-3.0

@@ -93,7 +93,81 @@ https://3.basecamp.com/{account_id}/buckets/{project_id}/card_tables/cards/{card
 
 ## Development
 
-See [CLAUDE.md](CLAUDE.md) for development environment setup and architecture details.
+### Dev Environment
+
+The easiest way to develop is with the Nextcloud dev container. It gives you a fully working Nextcloud instance with this app mounted in:
+
+```bash
+docker run --rm --name nc-dev -p 8090:80 \
+  -e SERVER_BRANCH=stable31 \
+  -v $(pwd):/var/www/html/apps-extra/integration_basecamp \
+  ghcr.io/juliusknorr/nextcloud-dev-php83:latest
+```
+
+Open http://localhost:8090 and log in with **admin / admin**.
+
+Enable the app:
+
+```bash
+./nc-dev.sh occ app:enable integration_basecamp
+```
+
+### Helper Script
+
+`./nc-dev.sh` wraps common docker exec commands:
+
+```bash
+./nc-dev.sh occ <command>     # Run occ commands
+./nc-dev.sh log               # Last 20 log lines
+./nc-dev.sh log-basecamp      # Basecamp-specific log lines
+./nc-dev.sh log-errors        # Errors only
+./nc-dev.sh curl <url>        # curl as admin (add -H "OCS-APIREQUEST: true" for API calls)
+```
+
+### Building
+
+```bash
+npm install           # Install frontend dependencies
+npm run build         # Production build
+npm run watch         # Rebuild on changes
+
+composer install      # PHP autoloader (run once)
+```
+
+PHP changes take effect immediately in the container. After changing Vue/JS files, run `npm run build` (or use `npm run watch`).
+
+### Installing the Text App
+
+The Text app is not included in the dev container and is needed to test link previews and the Smart Picker:
+
+```bash
+./nc-dev.sh bash -c "cd /var/www/html/apps && git clone --depth 1 --branch stable31 https://github.com/nextcloud/text.git text && cd text && composer install --no-dev"
+./nc-dev.sh occ app:enable text
+```
+
+### After Changing `info.xml`
+
+Nextcloud caches the app manifest. Re-enable to pick up changes:
+
+```bash
+./nc-dev.sh occ app:disable integration_basecamp && ./nc-dev.sh occ app:enable integration_basecamp
+```
+
+### Architecture Overview
+
+The app has two main features, both built on Nextcloud's Reference Provider system:
+
+1. **Link Previews** — Pasting a Basecamp card URL and selecting "Show link preview" renders a compact widget with card title, status, column, assignees, etc.
+2. **Smart Picker** — Typing "/" in a Text document shows "Create a Basecamp card", which opens a dialog to create a card directly from Nextcloud. The created card's URL is inserted as a link preview.
+
+Authentication uses OAuth 2 with Basecamp's 37signals launchpad. Tokens are stored encrypted per user. The Basecamp API requires a `User-Agent` header on every request.
+
+### Basecamp API Tips
+
+- API docs: https://github.com/basecamp/bc3-api
+- Card tables are not listed via a dedicated endpoint — they're found in the project's `dock` array (tool with `name: "kanban_board"`)
+- Columns are embedded in the card table response (the `lists` field), not fetched separately
+- Card creation (`POST`) does not support `assignee_ids` — assign via a follow-up `PUT`
 
 ## License
 
