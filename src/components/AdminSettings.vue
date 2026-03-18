@@ -4,74 +4,85 @@
 -->
 
 <template>
-	<div class="basecamp-admin-settings">
-		<h2>Basecamp Integration</h2>
-		<p class="settings-hint">
-			{{ t('integration_basecamp', 'To connect Basecamp, register an application at') }}
-			<a href="https://launchpad.37signals.com/integrations" target="_blank" rel="noopener noreferrer">
-				launchpad.37signals.com/integrations
-			</a>
-		</p>
-		<p class="settings-hint">
-			{{ t('integration_basecamp', 'Use the following redirect URI:') }}
-			<code>{{ redirectUri }}</code>
-		</p>
+	<div id="basecamp_prefs" class="section">
+		<h2>
+			<img :src="iconUrl" class="basecamp-icon" alt="">
+			{{ t('integration_basecamp', 'Basecamp integration') }}
+		</h2>
+		<div id="basecamp-content">
+			<p class="settings-hint">
+				{{ t('integration_basecamp', 'To connect Basecamp, register an application at') }}
+				<a href="https://launchpad.37signals.com/integrations" target="_blank" rel="noopener noreferrer">
+					launchpad.37signals.com/integrations
+				</a>
+			</p>
+			<p class="settings-hint">
+				{{ t('integration_basecamp', 'Use the following redirect URI:') }}
+				<br>
+				<strong>{{ redirectUri }}</strong>
+			</p>
 
-		<div class="field">
-			<label for="basecamp-client-id">
-				{{ t('integration_basecamp', 'Client ID') }}
-			</label>
-			<input id="basecamp-client-id"
-				v-model="state.client_id"
-				type="text"
-				:placeholder="t('integration_basecamp', 'Basecamp OAuth Client ID')"
-				@input="onSensitiveInput">
-		</div>
-		<div class="field">
-			<label for="basecamp-client-secret">
-				{{ t('integration_basecamp', 'Client Secret') }}
-			</label>
-			<input id="basecamp-client-secret"
-				v-model="state.client_secret"
-				type="password"
-				:placeholder="t('integration_basecamp', 'Basecamp OAuth Client Secret')"
-				@input="onSensitiveInput">
-		</div>
-		<div class="field">
-			<input id="basecamp-link-preview"
-				v-model="state.link_preview_enabled"
-				type="checkbox"
-				class="checkbox"
-				@change="onCheckboxChanged">
-			<label for="basecamp-link-preview">
+			<div class="line">
+				<label for="basecamp-client-id">
+					<KeyIcon :size="20" class="icon" />
+					{{ t('integration_basecamp', 'Client ID') }}
+				</label>
+				<input id="basecamp-client-id"
+					v-model="state.client_id"
+					type="text"
+					:placeholder="t('integration_basecamp', 'Basecamp OAuth Client ID')"
+					@input="onSensitiveInput">
+			</div>
+			<div class="line">
+				<label for="basecamp-client-secret">
+					<KeyIcon :size="20" class="icon" />
+					{{ t('integration_basecamp', 'Client Secret') }}
+				</label>
+				<input id="basecamp-client-secret"
+					v-model="state.client_secret"
+					type="password"
+					:placeholder="t('integration_basecamp', 'Basecamp OAuth Client Secret')"
+					@input="onSensitiveInput">
+			</div>
+
+			<NcCheckboxRadioSwitch
+				:checked="state.link_preview_enabled"
+				@update:checked="onCheckboxChanged">
 				{{ t('integration_basecamp', 'Enable Basecamp link previews') }}
-			</label>
-		</div>
-		<div v-if="saved" class="saved-message">
-			{{ t('integration_basecamp', 'Settings saved') }}
+			</NcCheckboxRadioSwitch>
 		</div>
 	</div>
 </template>
 
 <script>
+import KeyIcon from 'vue-material-design-icons/Key.vue'
+
+import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
+
 import { loadState } from '@nextcloud/initial-state'
 import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
+import { generateUrl, imagePath } from '@nextcloud/router'
 import { confirmPassword } from '@nextcloud/password-confirmation'
 import '../../node_modules/@nextcloud/password-confirmation/dist/style.css'
 
 export default {
 	name: 'AdminSettings',
+	components: {
+		KeyIcon,
+		NcCheckboxRadioSwitch,
+	},
 	data() {
 		return {
 			state: loadState('integration_basecamp', 'admin-config'),
-			saved: false,
 			sensitiveTimer: null,
 		}
 	},
 	computed: {
 		redirectUri() {
 			return window.location.origin + generateUrl('/apps/integration_basecamp/oauth-redirect')
+		},
+		iconUrl() {
+			return imagePath('integration_basecamp', 'app-bw.png')
 		},
 	},
 	methods: {
@@ -83,7 +94,8 @@ export default {
 				this.saveSensitiveConfig()
 			}, 1500)
 		},
-		onCheckboxChanged() {
+		onCheckboxChanged(newValue) {
+			this.state.link_preview_enabled = newValue
 			this.saveConfig()
 		},
 		async saveConfig() {
@@ -93,7 +105,6 @@ export default {
 						link_preview_enabled: this.state.link_preview_enabled ? '1' : '0',
 					},
 				})
-				this.showSaved()
 			} catch (e) {
 				console.error('Failed to save settings', e)
 			}
@@ -107,55 +118,56 @@ export default {
 						client_secret: this.state.client_secret,
 					},
 				})
-				this.showSaved()
 			} catch (e) {
 				console.error('Failed to save sensitive settings', e)
 			}
-		},
-		showSaved() {
-			this.saved = true
-			setTimeout(() => { this.saved = false }, 3000)
 		},
 	},
 }
 </script>
 
-<style scoped>
-.basecamp-admin-settings {
-	padding: 20px;
-}
+<style scoped lang="scss">
+#basecamp_prefs {
+	#basecamp-content {
+		margin-left: 40px;
+		max-width: 800px;
+	}
 
-.settings-hint {
-	color: var(--color-text-maxcontrast);
-	margin-bottom: 12px;
-}
+	h2 {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
-.settings-hint code {
-	background: var(--color-background-dark);
-	padding: 2px 6px;
-	border-radius: 4px;
-	font-size: 12px;
-	user-select: all;
-}
+	.basecamp-icon {
+		width: 24px;
+		height: 24px;
+		margin-right: 8px;
+	}
 
-.field {
-	margin-bottom: 12px;
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
+	.line {
+		display: flex;
+		align-items: center;
+		margin-bottom: 8px;
 
-.field label {
-	min-width: 150px;
-}
+		> label {
+			width: 300px;
+			display: flex;
+			align-items: center;
 
-.field input[type="text"],
-.field input[type="password"] {
-	width: 400px;
-}
+			.icon {
+				margin-right: 4px;
+			}
+		}
 
-.saved-message {
-	color: var(--color-success);
-	margin-top: 8px;
+		> input {
+			width: 300px;
+		}
+	}
+
+	.settings-hint {
+		color: var(--color-text-maxcontrast);
+		margin-bottom: 12px;
+	}
 }
 </style>

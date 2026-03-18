@@ -39,8 +39,9 @@ OC.L10N.register(
     "Enable Basecamp link previews" : "Basecamp-Linkvorschauen aktivieren",
     "Settings saved" : "Einstellungen gespeichert",
     "Basecamp OAuth has not been configured by the administrator. Ask your admin to set up the Basecamp integration in the admin settings." : "Basecamp-OAuth wurde vom Administrator noch nicht eingerichtet. Bitte den Administrator, die Basecamp-Integration in den Admin-Einstellungen zu konfigurieren.",
+    "Basecamp integration" : "Basecamp-Einbindung",
     "Connected as {name}" : "Verbunden als {name}",
-    "Disconnect" : "Trennen",
+    "Disconnect from Basecamp" : "Basecamp-Verbindung trennen",
     "Connect to Basecamp" : "Mit Basecamp verbinden"
 },
 "nplurals=2; plural=(n != 1);");
