@@ -44,20 +44,12 @@
 					:placeholder="t('integration_basecamp', 'Basecamp OAuth Client Secret')"
 					@input="onSensitiveInput">
 			</div>
-
-			<NcCheckboxRadioSwitch
-				:checked="state.link_preview_enabled"
-				@update:checked="onCheckboxChanged">
-				{{ t('integration_basecamp', 'Enable Basecamp link previews') }}
-			</NcCheckboxRadioSwitch>
 		</div>
 	</div>
 </template>
 
 <script>
 import KeyIcon from 'vue-material-design-icons/Key.vue'
-
-import NcCheckboxRadioSwitch from '@nextcloud/vue/components/NcCheckboxRadioSwitch'
 
 import { loadState } from '@nextcloud/initial-state'
 import axios from '@nextcloud/axios'
@@ -70,7 +62,6 @@ export default {
 	name: 'AdminSettings',
 	components: {
 		KeyIcon,
-		NcCheckboxRadioSwitch,
 	},
 	data() {
 		return {
@@ -94,22 +85,6 @@ export default {
 			this.sensitiveTimer = setTimeout(() => {
 				this.saveSensitiveConfig()
 			}, 1500)
-		},
-		onCheckboxChanged(newValue) {
-			this.state.link_preview_enabled = newValue
-			this.saveConfig()
-		},
-		async saveConfig() {
-			try {
-				await axios.put(generateUrl('/apps/integration_basecamp/admin-config'), {
-					values: {
-						link_preview_enabled: this.state.link_preview_enabled ? '1' : '0',
-					},
-				})
-				showSuccess(t('integration_basecamp', 'Settings saved'))
-			} catch (e) {
-				console.error('Failed to save settings', e)
-			}
 		},
 		async saveSensitiveConfig() {
 			try {

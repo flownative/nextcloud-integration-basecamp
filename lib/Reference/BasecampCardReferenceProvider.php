@@ -48,10 +48,6 @@ class BasecampCardReferenceProvider extends ADiscoverableReferenceProvider {
 	}
 
 	public function matchReference(string $referenceText): bool {
-		$adminLinkPreviewEnabled = $this->config->getAppValue(Application::APP_ID, 'link_preview_enabled', '1') === '1';
-		if (!$adminLinkPreviewEnabled) {
-			return false;
-		}
 		return preg_match(self::URL_PATTERN, $referenceText) === 1;
 	}
 

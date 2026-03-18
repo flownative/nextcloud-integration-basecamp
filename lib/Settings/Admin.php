@@ -28,7 +28,6 @@ class Admin implements ISettings {
 		$adminConfig = [
 			'client_id' => $clientId,
 			'client_secret' => $clientSecret === '' ? '' : 'dummyClientSecret',
-			'link_preview_enabled' => $this->config->getAppValue(Application::APP_ID, 'link_preview_enabled', '1') === '1',
 		];
 		$this->initialStateService->provideInitialState('admin-config', $adminConfig);
 		Util::addScript(Application::APP_ID, Application::APP_ID . '-adminSettings');
