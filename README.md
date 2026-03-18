@@ -23,7 +23,7 @@ Download the latest release archive from the [Releases](https://github.com/flown
 
 ```bash
 cd /path/to/nextcloud/apps
-wget https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.2.0/integration_basecamp.tar.gz
+wget https://github.com/flownative/nextcloud-integration-basecamp/releases/latest/download/integration_basecamp.tar.gz
 tar xzf integration_basecamp.tar.gz
 rm integration_basecamp.tar.gz
 chown -R www-data:www-data integration_basecamp
@@ -37,7 +37,8 @@ For Nextcloud AIO installations, install directly into the running container:
 ```bash
 sudo docker exec -it --user root nextcloud-aio-nextcloud bash -c "
   cd /var/www/html/custom_apps &&
-  curl -fsSL -o integration_basecamp.tar.gz https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.2.0/integration_basecamp.tar.gz &&
+  rm -rf integration_basecamp &&
+  curl -fsSL -o integration_basecamp.tar.gz https://github.com/flownative/nextcloud-integration-basecamp/releases/latest/download/integration_basecamp.tar.gz &&
   tar xzf integration_basecamp.tar.gz &&
   rm integration_basecamp.tar.gz &&
   chown -R www-data:www-data integration_basecamp
@@ -61,13 +62,30 @@ sudo -u www-data php /path/to/nextcloud/occ app:enable integration_basecamp
 
 ### Upgrading
 
-Download and extract the new release over the existing installation, then run:
+Remove the old app directory, extract the new release, and re-enable the app. Simply extracting over the old files is not enough — old build artifacts (JS chunks with hashed filenames) would remain and `occ upgrade` does not reliably detect app-level version changes.
+
+**Important:** Nextcloud may copy app files to `/var/www/html/integration_basecamp/` (outside `custom_apps/`). This copy is used for serving JS/CSS and is **not** updated automatically. You must delete it so Nextcloud re-creates it from `custom_apps/` on the next `app:enable`.
+
+**Standard installation:**
 
 ```bash
-sudo -u www-data php /path/to/nextcloud/occ upgrade
+cd /path/to/nextcloud/apps
+rm -rf integration_basecamp
+wget https://github.com/flownative/nextcloud-integration-basecamp/releases/latest/download/integration_basecamp.tar.gz
+tar xzf integration_basecamp.tar.gz
+rm integration_basecamp.tar.gz
+chown -R www-data:www-data integration_basecamp
+sudo -u www-data php /path/to/nextcloud/occ app:disable integration_basecamp
+sudo -u www-data php /path/to/nextcloud/occ app:enable integration_basecamp
 ```
 
-For AIO, repeat the installation steps above — the new files replace the old ones in the persistent volume.
+**AIO:** Run the same AIO installation command above (it includes `rm -rf`), then also remove the Nextcloud-internal copy:
+
+```bash
+sudo docker exec -it --user root nextcloud-aio-nextcloud bash -c "rm -rf /var/www/html/integration_basecamp"
+sudo docker exec --user www-data nextcloud-aio-nextcloud php occ app:disable integration_basecamp
+sudo docker exec --user www-data nextcloud-aio-nextcloud php occ app:enable integration_basecamp
+```
 
 ## Configuration
 
@@ -166,6 +184,19 @@ Authentication uses OAuth 2 with Basecamp's 37signals launchpad. Tokens are stor
 - Card tables are not listed via a dedicated endpoint — they're found in the project's `dock` array (tool with `name: "kanban_board"`)
 - Columns are embedded in the card table response (the `lists` field), not fetched separately
 - Card creation (`POST`) does not support `assignee_ids` — assign via a follow-up `PUT`
+
+### Releasing
+
+1. Create a branch, bump the version in both `appinfo/info.xml` and `package.json`
+2. Merge the version bump PR into `main`
+3. Tag and push:
+   ```bash
+   git tag v<version>
+   git push origin v<version>
+   ```
+4. The GitHub Actions workflow (`.github/workflows/release.yml`) builds the release archive automatically and attaches it to the GitHub Release
+
+The version in `info.xml` **must** match the tag — Nextcloud uses `info.xml` to detect the installed version. If you tag without bumping, the release archive will contain the old version and `occ upgrade` won't recognize the update.
 
 ## License
 
