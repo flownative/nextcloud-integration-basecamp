@@ -10,15 +10,19 @@ use OCP\Collaboration\Reference\IReference;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 
+/**
+ * Smart Picker provider for creating Basecamp cards.
+ *
+ * This is a picker-only provider: matchReference() and resolveReference()
+ * always return false/null. The actual UI is provided by the custom picker
+ * element registered in reference.js. URL resolution is handled separately
+ * by BasecampCardReferenceProvider.
+ */
 class BasecampCreateCardReferenceProvider extends ADiscoverableReferenceProvider {
 
-	private const URL_PATTERN = '/^https:\/\/3\.basecamp\.com\/([0-9]+)\/buckets\/([0-9]+)\/card_tables\/cards\/([0-9]+)/i';
-
 	public function __construct(
-		private BasecampCardReferenceProvider $cardProvider,
 		private IL10N $l10n,
 		private IURLGenerator $urlGenerator,
-		private ?string $userId,
 	) {
 	}
 
@@ -41,18 +45,18 @@ class BasecampCreateCardReferenceProvider extends ADiscoverableReferenceProvider
 	}
 
 	public function matchReference(string $referenceText): bool {
-		return preg_match(self::URL_PATTERN, $referenceText) === 1;
+		return false;
 	}
 
 	public function resolveReference(string $referenceText): ?IReference {
-		return $this->cardProvider->resolveReference($referenceText);
+		return null;
 	}
 
 	public function getCachePrefix(string $referenceId): string {
-		return $this->userId ?? '';
+		return '';
 	}
 
 	public function getCacheKey(string $referenceId): ?string {
-		return $referenceId;
+		return null;
 	}
 }
