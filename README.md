@@ -1,14 +1,12 @@
 # Nextcloud Basecamp Integration
 
-A Nextcloud app that provides rich link previews for [Basecamp](https://basecamp.com) card URLs in Text and Talk documents.
+A Nextcloud app that provides rich link previews for [Basecamp](https://basecamp.com) card URLs and lets you create Basecamp cards directly from Text documents.
 
 ## Features
 
-- Paste a Basecamp card URL into a Nextcloud Text document or Talk message
-- Select "Show link preview" to render a rich inline widget showing:
-  - Basecamp logo and card title with status indicator
-  - Project name and Kanban column
-  - Assignees, due date, and comment count
+- **Link Previews** — Paste a Basecamp card URL into a Nextcloud Text document or Talk message, select "Show link preview" to render a rich inline widget showing card title, status, project, column, assignees, due date, and comment count
+- **Smart Picker** — Type "/" in a Text document and select "Create a Basecamp card" to create cards directly from Nextcloud with project, column, assignee, and due date selection
+- **German translations** included (Nextcloud auto-detects language)
 - Per-user OAuth 2 authentication with automatic token refresh
 - Encrypted token storage
 
@@ -25,7 +23,7 @@ Download the latest release archive from the [Releases](https://github.com/flown
 
 ```bash
 cd /path/to/nextcloud/apps
-wget https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.1.0/integration_basecamp.tar.gz
+wget https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.2.0/integration_basecamp.tar.gz
 tar xzf integration_basecamp.tar.gz
 rm integration_basecamp.tar.gz
 chown -R www-data:www-data integration_basecamp
@@ -39,7 +37,7 @@ For Nextcloud AIO installations, install directly into the running container:
 ```bash
 sudo docker exec -it --user root nextcloud-aio-nextcloud bash -c "
   cd /var/www/html/custom_apps &&
-  curl -fsSL -o integration_basecamp.tar.gz https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.1.0/integration_basecamp.tar.gz &&
+  curl -fsSL -o integration_basecamp.tar.gz https://github.com/flownative/nextcloud-integration-basecamp/releases/download/v0.2.0/integration_basecamp.tar.gz &&
   tar xzf integration_basecamp.tar.gz &&
   rm integration_basecamp.tar.gz &&
   chown -R www-data:www-data integration_basecamp

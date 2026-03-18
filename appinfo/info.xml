@@ -2,9 +2,9 @@
 <info>
     <id>integration_basecamp</id>
     <name>Basecamp integration</name>
-    <summary>Link previews for Basecamp card URLs</summary>
-    <description><![CDATA[Basecamp integration provides link previews for Basecamp card URLs in Talk and Text documents, showing card title, status, column, assignees and due date.]]></description>
-    <version>0.1.0</version>
+    <summary>Link previews and card creation for Basecamp</summary>
+    <description><![CDATA[Basecamp integration provides rich link previews for Basecamp card URLs in Talk and Text documents, showing card title, status, column, assignees and due date. Create new Basecamp cards directly from the Smart Picker ("/") menu in Text documents.]]></description>
+    <version>0.2.0</version>
     <licence>agpl</licence>
     <author>Flownative</author>
     <namespace>IntegrationBasecamp</namespace>
