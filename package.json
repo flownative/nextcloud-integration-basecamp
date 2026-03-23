@@ -1,6 +1,6 @@
 {
   "name": "integration_basecamp",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Basecamp integration for Nextcloud",
   "type": "module",
   "scripts": {

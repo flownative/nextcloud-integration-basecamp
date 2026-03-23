@@ -4,7 +4,7 @@
     <name>Basecamp integration</name>
     <summary>Link previews and card creation for Basecamp</summary>
     <description><![CDATA[Basecamp integration provides rich link previews for Basecamp card URLs in Talk and Text documents, showing card title, status, column, assignees and due date. Create new Basecamp cards directly from the Smart Picker ("/") menu in Text documents.]]></description>
-    <version>0.2.2</version>
+    <version>0.3.0</version>
     <licence>agpl</licence>
     <author>Flownative</author>
     <namespace>IntegrationBasecamp</namespace>
