@@ -9,6 +9,8 @@
     <author>Flownative</author>
     <namespace>IntegrationBasecamp</namespace>
     <category>integration</category>
+    <website>https://github.com/flownative/nextcloud-integration-basecamp</website>
+    <bugs>https://github.com/flownative/nextcloud-integration-basecamp/issues</bugs>
     <dependencies>
         <nextcloud min-version="28" max-version="34"/>
     </dependencies>
